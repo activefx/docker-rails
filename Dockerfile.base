@@ -1,0 +1,87 @@
+# To look around the baseimage-docker, run:
+# docker run --rm -t -i phusion/baseimage:0.9.16 /sbin/my_init -- bash -l
+
+# To look around this image, run:
+# docker run --rm -t -i -p 80:8000 --env-file=.env base_image:latest /sbin/my_init -- bash -l
+
+# Use phusion/baseimage as base image. To make your builds reproducible, make
+# sure you lock down to a specific version, not to `latest`!
+# See https://github.com/phusion/baseimage-docker/blob/master/Changelog.md for
+# a list of version numbers.
+FROM phusion/baseimage:0.9.16
+
+# Set the home directory
+ENV HOME /root
+ENV RAILS_ENV production
+
+# The baseimage-docker init system, /sbin/my_init, runs the following scripts
+# during startup, in the following order:
+# - All executable scripts in /etc/my_init.d, if this directory exists. The
+#   scripts are run in lexicographic order.
+# - The script /etc/rc.local, if this file exists.
+CMD ["/sbin/my_init"]
+
+# Set Ruby version, you can change these settings to upgrade Ruby and rebuild
+# the Docker image from this point forward
+ENV RUBY_MAJOR 2.2
+ENV RUBY_VERSION 2.2.2
+ENV RUBY_DOWNLOAD_SHA256 5ffc0f317e429e6b29d4a98ac521c3ce65481bfd22a8cf845fa02a7b113d9b44
+
+# Add the docker directory to the image as pd_build
+ADD docker/base /pd_build
+
+# Run the install script from the docker directory copied in the last step
+RUN /pd_build/install.sh
+
+# Make installed gems available globally
+ENV GEM_HOME /usr/local/bundle
+ENV PATH $GEM_HOME/bin:$PATH
+RUN gem install bundler \
+  && bundle config --global path "$GEM_HOME" \
+  && bundle config --global bin "$GEM_HOME/bin"
+
+# Don't create ".bundle" in all our apps
+ENV BUNDLE_APP_CONFIG $GEM_HOME
+
+# Install bundle of gems
+WORKDIR /home/app
+ADD Gemfile Gemfile
+ADD Gemfile.lock Gemfile.lock
+
+# RUN bundle install
+# We bundle without development & test libraries, to prevent installation of
+# the passenger web server from rubygems
+RUN chown app:app /usr/local/bundle
+RUN exec /sbin/setuser app bundle install --deployment --without development test
+
+# Add the Rails app
+ADD . /home/app
+
+# Even though we are logging to STDOUT, Rails will complain about
+# no production.log and its prermissions
+RUN touch /home/app/log/production.log
+RUN chmod 0664 /home/app/log/production.log
+RUN chown -R app:app /home/app/log
+
+# Enable SSH
+# RUN rm -f /etc/service/sshd/down
+
+# Allow ssh login
+# Be sure to add id_rsa.pub to .gitignore and then copy to the
+# current directory so it is available in the build context:
+# cp -f ~/.ssh/id_rsa.pub id_rsa.pub
+# ADD id_rsa.pub /tmp/your_key
+# RUN cat /tmp/your_key >> /root/.ssh/authorized_keys && rm -f /tmp/your_key
+
+# Clean up APT when done.
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Add startup script to run during container startup
+# RUN mkdir -p /etc/my_init.d
+# ADD startup.sh /etc/my_init.d/startup.sh
+# RUN chmod +x /etc/my_init.d/*.sh
+
+# ...put your own build instructions here...
+
+# EXPOSE 80 443
+

@@ -1,0 +1,6 @@
+# docker run -d --env-file=.env worker_image
+
+FROM base_image:latest
+
+RUN mkdir /etc/service/shoryuken
+ADD docker/worker/shoryuken_run.sh /etc/service/shoryuken/run

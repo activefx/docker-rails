@@ -1,0 +1,8 @@
+# docker run -p 8000:80 --env-file=.env web_image
+
+FROM base_image:latest
+
+RUN mkdir /etc/service/passenger
+ADD docker/web/passenger_run.sh /etc/service/passenger/run
+
+EXPOSE 8000

@@ -1,0 +1,6 @@
+# docker run -d --env-file=.env clock_image
+
+FROM base_image:latest
+
+RUN mkdir /etc/service/clockwork
+ADD docker/worker/clockwork_run.sh /etc/service/clockwork/run

@@ -1,0 +1,16 @@
+.git
+.env
+coverage
+doc
+log/*.log
+test
+spec
+tmp
+.rspec
+Guardfile
+*.md
+*.rdoc
+*.psd
+*.pdf
+passenger.*
+Vagrantfile

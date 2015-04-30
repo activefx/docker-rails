@@ -1,0 +1,47 @@
+# https://support.tutum.co/support/solutions/articles/5000583471-stack-yaml-reference
+#
+# No target_number_containers with every_node deployment strategy
+#
+# lb:
+#   image: tutum/haproxy
+#   links:
+#     - "web:web"
+#   ports:
+#     - "80:80"
+#   roles:
+#     - global
+#   autorestart: always
+web:
+  image:
+  deployment_strategy: every_node
+  autorestart: on_failure
+  sequential_deployment: false
+  autoredeploy: true
+  autorestart: always
+  tags:
+    - tutum_example_web
+  ports:
+    - "80:8000"
+    # - "443:443" # ssl
+  environment:
+    TUTUM_USER
+    TUTUM_APIKEY
+worker:
+  image:
+  deployment_strategy: every_node
+  autorestart: on_failure
+  sequential_deployment: false
+  autoredeploy: true
+  autorestart: always
+  tags:
+    - tutum_example_worker
+  environment:
+    TUTUM_USER
+    TUTUM_APIKEY
+#
+# References
+#
+# deployment_strategy: https://support.tutum.co/support/solutions/articles/5000520721
+# tags: https://support.tutum.co/support/solutions/articles/5000508859-deploy-tags
+# sequential_deployment: https://support.tutum.co/support/solutions/articles/5000012179-service
+# autoredeploy: https://support.tutum.co/support/solutions/articles/5000012183-using-tutum-s-private-docker-image-registry
